@@ -1,0 +1,917 @@
+Build the complete LegalLens application now.
+
+IMPORTANT: This is a hackathon prototype that must be demonstrated on a physical smartphone tomorrow.
+
+I have a very limited remaining Replit Agent budget of approximately $10.
+
+You MUST optimize for low Agent effort and finish the complete working prototype in one build.
+
+DO NOT ask me clarification questions.
+
+DO NOT repeatedly redesign the application.
+
+DO NOT over-engineer.
+
+DO NOT add features outside this specification.
+
+DO NOT create unnecessary infrastructure.
+
+DO NOT create a database.
+
+DO NOT create authentication.
+
+DO NOT create an admin dashboard.
+
+DO NOT create a Python backend.
+
+DO NOT create a separate server.
+
+DO NOT add OCR libraries such as Tesseract or EasyOCR.
+
+DO NOT add OpenCV.
+
+DO NOT add product databases.
+
+DO NOT add payments.
+
+DO NOT add user accounts.
+
+DO NOT add analytics.
+
+DO NOT add unnecessary packages.
+
+Build a clean, minimal Next.js application from scratch if the existing project is messy.
+
+==================================================
+PRODUCT
+==================================================
+
+Name:
+
+LegalLens
+
+Slogan:
+
+"Eat smart. Pay fair. Know your food."
+
+LegalLens is a mobile-first consumer web application that lets someone photograph a packaged food product and understand:
+
+- what is written on the package
+- whether important label information appears to be present
+- the real unit price
+- nutrition information
+- sugar-related ingredients
+
+The original project concept is based on automatically detecting, extracting and validating mandatory declarations on packaged products under Legal Metrology rules.
+
+The prototype also adds consumer-friendly nutrition and sugar analysis.
+
+The application should feel like a polished food-tech consumer product.
+
+It must NOT look like:
+- a government website
+- an enterprise dashboard
+- a developer tool
+- a generic AI chatbot
+- Iron Man/JARVIS
+
+Use a warm, premium, food-oriented visual design.
+
+==================================================
+TECH STACK
+==================================================
+
+Use ONLY:
+
+- Next.js App Router
+- TypeScript
+- React
+- Tailwind CSS
+- Framer Motion
+- lucide-react
+- @google/generative-ai
+- Zod if required for response validation
+
+No database.
+
+No authentication.
+
+No external backend.
+
+==================================================
+ARCHITECTURE
+==================================================
+
+Keep the architecture deliberately simple.
+
+Use approximately:
+
+app/
+  page.tsx
+  api/
+    analyze/
+      route.ts
+
+components/
+  Scanner.tsx
+  Results.tsx
+  BottomSheet.tsx
+
+lib/
+  rules.ts
+  schema.ts
+  types.ts
+  gemini.ts
+
+Do not create unnecessary layers.
+
+The architecture should be:
+
+PHONE CAMERA / IMAGE
+        ↓
+Next.js frontend
+        ↓
+/api/analyze
+        ↓
+Gemini Vision
+        ↓
+structured extraction
+        ↓
+Zod validation
+        ↓
+deterministic rule engine
+        ↓
+results
+        ↓
+mobile UI
+
+==================================================
+CRITICAL AI DESIGN
+==================================================
+
+Gemini is the VISION AND EXTRACTION layer.
+
+The application itself is the VERIFICATION layer.
+
+Do NOT ask Gemini to decide deterministic mathematical results.
+
+Do NOT ask Gemini to invent legal conclusions.
+
+Gemini should extract information visible in the image.
+
+The application should independently calculate and compare values.
+
+This is specifically intended to reduce hallucinations.
+
+NEVER invent missing information.
+
+If something cannot be read confidently:
+
+return:
+
+"Not clearly visible"
+
+or:
+
+"Could not verify"
+
+Never guess.
+
+==================================================
+GEMINI
+==================================================
+
+Use:
+
+process.env.GEMINI_API_KEY
+
+Never expose this key to the browser.
+
+Never use NEXT_PUBLIC_GEMINI_API_KEY.
+
+Use EXACTLY:
+
+gemini-3.5-flash
+
+Do not silently substitute another model.
+
+Use @google/generative-ai.
+
+ONE SCAN MUST RESULT IN EXACTLY ONE GEMINI API REQUEST.
+
+Do NOT automatically retry failed Gemini requests.
+
+If Gemini fails, show the error state and allow the user to explicitly try again.
+
+Do not call Gemini during image preview.
+
+Do not call Gemini multiple times to verify the first response.
+
+==================================================
+IMAGE COST CONTROL
+==================================================
+
+Before sending an image to Gemini:
+
+- resize/compress it client-side when practical
+- do not send unnecessarily huge original camera images
+- maintain enough resolution to read package labels
+
+Do not repeatedly process the same image.
+
+Do not implement automatic retries.
+
+==================================================
+GEMINI EXTRACTION
+==================================================
+
+Ask Gemini to extract only information visible in the supplied package image.
+
+Return compact JSON.
+
+Use this structure:
+
+{
+  "product_name": "String",
+  "brand_or_manufacturer": "String",
+  "net_quantity": "String",
+  "mrp": "String",
+  "declared_unit_sale_price": "String",
+  "manufacturer_details": "String",
+  "country_of_origin": "String",
+  "ingredients": ["String"],
+  "nutrition": {
+    "energy": "String",
+    "protein": "String",
+    "total_sugars": "String",
+    "sodium": "String"
+  },
+  "extraction_confidence": {
+    "product_name": "HIGH | MEDIUM | LOW",
+    "net_quantity": "HIGH | MEDIUM | LOW",
+    "mrp": "HIGH | MEDIUM | LOW",
+    "ingredients": "HIGH | MEDIUM | LOW",
+    "nutrition": "HIGH | MEDIUM | LOW"
+  }
+}
+
+If information is unreadable, use:
+
+"Not clearly visible"
+
+Do NOT fabricate values.
+
+Do NOT ask Gemini for a final legal verdict.
+
+==================================================
+RULE ENGINE
+==================================================
+
+Create:
+
+lib/rules.ts
+
+The rule engine independently evaluates:
+
+1. Net Quantity
+2. Maximum Retail Price
+3. Unit Price
+4. Nutrition & Ingredients
+
+Possible status:
+
+COMPLIANT
+NON_COMPLIANT
+UNVERIFIED
+
+UNVERIFIED IS IMPORTANT.
+
+If information is not visible, do NOT automatically mark it compliant.
+
+If information is not visible, do NOT automatically mark it non-compliant.
+
+Use UNVERIFIED.
+
+Overall result:
+
+LEGAL
+
+only when important checks have sufficient evidence and no deterministic issue was identified.
+
+WARNING_FLAGS
+
+when:
+- a deterministic issue exists
+OR
+- important information cannot be verified.
+
+==================================================
+TRUE PRICE
+==================================================
+
+This is a core feature.
+
+Calculate unit price in APPLICATION CODE.
+
+Example:
+
+MRP ₹100
+Net quantity 200 g
+
+Calculated:
+
+₹100 / 200 g = ₹0.50/g
+
+Do NOT ask Gemini to perform this calculation.
+
+Support common units:
+
+g
+kg
+ml
+L
+l
+
+Normalize units before calculating.
+
+Show:
+
+MRP
+Net quantity
+Declared unit price
+Calculated unit price
+Difference
+
+If calculation cannot be performed:
+
+"Could not calculate"
+
+Do not guess.
+
+==================================================
+SUGAR ANALYSIS
+==================================================
+
+From the extracted ingredient list, identify common sugar-related ingredients including:
+
+sugar
+sucrose
+glucose syrup
+glucose
+dextrose
+maltose
+fructose
+invert sugar
+invert sugar syrup
+corn syrup
+malt syrup
+rice syrup
+honey
+cane sugar
+brown sugar
+
+Call this section:
+
+"Sugars to Notice"
+
+Do NOT call every unfamiliar ingredient a hidden ingredient.
+
+Do NOT make medical claims.
+
+For each detected sugar-related ingredient, show a short consumer-friendly explanation.
+
+Example:
+
+"Glucose syrup"
+
+"An added-sugar ingredient commonly used for sweetness or texture."
+
+Do not say that an ingredient is dangerous.
+
+Do not provide medical advice.
+
+==================================================
+NUTRITION
+==================================================
+
+Show:
+
+Energy
+Protein
+Total Sugars
+Sodium
+
+If unavailable:
+
+"Not clearly visible"
+
+Never invent nutrition values.
+
+==================================================
+UI LANGUAGE
+==================================================
+
+The user is a normal citizen, not a lawyer or developer.
+
+Avoid technical terminology.
+
+Use:
+
+"True Price"
+
+instead of:
+
+"Unit Sale Price"
+
+Use:
+
+"Label Check"
+
+instead of:
+
+"Rule Engine"
+
+Use:
+
+"Nutrition & Sugars"
+
+instead of:
+
+"Ingredient Audit"
+
+Use:
+
+"Could not verify"
+
+instead of:
+
+"Insufficient extraction confidence"
+
+==================================================
+VISUAL DESIGN
+==================================================
+
+Create a premium mobile-first food-tech interface.
+
+Visual direction:
+
+- warm
+- clean
+- friendly
+- premium
+- modern
+- soft gradients
+- large rounded cards
+- subtle shadows
+- clean typography
+- generous spacing
+- polished animations
+
+Use semantic colors:
+
+green = looks good
+amber = needs checking
+red = potential problem
+
+Do not use excessive neon.
+
+Do not use an Iron Man/JARVIS aesthetic.
+
+Do not make it look like a government portal.
+
+==================================================
+HOME SCREEN
+==================================================
+
+Display:
+
+LegalLens
+
+"Eat smart. Pay fair. Know your food."
+
+Then:
+
+"Scan a food package"
+
+"Check the label, price and sugars."
+
+Create a large camera-style scanner HUD.
+
+Use:
+
+<input
+  type="file"
+  accept="image/*"
+  capture="environment"
+/>
+
+The entire scanner area should be easy to tap.
+
+Show corner brackets.
+
+Show a large button:
+
+"Scan Package"
+
+Also support normal desktop file selection.
+
+==================================================
+IMAGE PREVIEW
+==================================================
+
+After selecting an image:
+
+Show preview.
+
+Show:
+
+"Scan This Package"
+
+and:
+
+"Choose Another Photo"
+
+Do not call Gemini until the user confirms scanning.
+
+==================================================
+LOADING
+==================================================
+
+Show the uploaded image dimmed.
+
+Animate a scanning line with Framer Motion.
+
+Show these friendly messages:
+
+"Looking at the package..."
+
+"Reading the label..."
+
+"Checking the price..."
+
+"Checking nutrition & sugars..."
+
+"Preparing your results..."
+
+Do not use technical jargon.
+
+==================================================
+RESULTS
+==================================================
+
+Show:
+
+Product name
+
+Brand
+
+Large friendly overall result.
+
+Instead of only displaying:
+
+LEGAL
+
+display:
+
+"Looks Good"
+
+or:
+
+"Needs a Closer Look"
+
+Show the technical status underneath if useful.
+
+If some information is unavailable:
+
+"Some details could not be verified from this photo."
+
+Then show three cards:
+
+Nutrition & Sugars
+Label Check
+True Price
+
+==================================================
+NUTRITION BOTTOM SHEET
+==================================================
+
+Use Framer Motion.
+
+Title:
+
+"Nutrition & Sugars"
+
+Show a two-column grid:
+
+Energy
+Protein
+Total Sugars
+Sodium
+
+Then:
+
+"Sugars to Notice"
+
+Show detected sugar-related ingredients.
+
+If none were clearly identified:
+
+"None of the common added-sugar ingredients we checked for were clearly identified."
+
+Do NOT say:
+
+"No hidden sugars exist."
+
+==================================================
+LABEL CHECK BOTTOM SHEET
+==================================================
+
+Title:
+
+"Label Check"
+
+Show:
+
+Net Quantity
+MRP
+Unit Price
+Nutrition & Ingredients
+
+Statuses:
+
+✓ Looks good
+⚠ Needs checking
+✕ Potential issue
+
+Explain each in simple language.
+
+Examples:
+
+"Net quantity was clearly visible."
+
+"MRP could not be read clearly."
+
+==================================================
+TRUE PRICE BOTTOM SHEET
+==================================================
+
+Title:
+
+"True Price"
+
+Text:
+
+"We calculate the price per gram or ml ourselves so you can compare products fairly."
+
+Show:
+
+MRP
+Net quantity
+Declared unit price
+Calculated unit price
+
+Visually show:
+
+₹100
+÷
+200 g
+=
+₹0.50/g
+
+If values match:
+
+"Your package price matches the calculation."
+
+If they differ:
+
+"Price difference detected."
+
+If insufficient information:
+
+"Not enough information to calculate this."
+
+==================================================
+COMPLAINT ACTION
+==================================================
+
+At the bottom of results add:
+
+"Report a Potential Issue"
+
+Use:
+
+mailto:helpline@nch.in
+
+Include:
+
+product name
+overall result
+potential issue
+
+Do NOT describe an AI warning as proven legal guilt.
+
+Use wording:
+
+"A potential packaging compliance issue was detected."
+
+Second button:
+
+"Scan Another Package"
+
+This completely resets the application.
+
+==================================================
+ERROR HANDLING
+==================================================
+
+Handle:
+
+- invalid image
+- unsupported image
+- oversized image
+- missing API key
+- Gemini API failure
+- Gemini timeout
+- malformed Gemini response
+- validation failure
+- missing fields
+- low confidence extraction
+
+Never show a blank screen.
+
+Show:
+
+"Something went wrong while reading this package."
+
+Button:
+
+"Try Again"
+
+Do not show stack traces.
+
+==================================================
+HACKATHON DEMO FALLBACK
+==================================================
+
+This application will be demonstrated LIVE on a physical smartphone tomorrow.
+
+Therefore create a small static sample product inside the application.
+
+Add a subtle secondary button:
+
+"Try a Sample Scan"
+
+This is NOT the default path.
+
+The normal:
+
+"Scan Package"
+
+button MUST use the real Gemini API.
+
+"Try a Sample Scan" must NOT use Gemini.
+
+It must work without:
+- internet
+- Gemini
+- API key
+- network connectivity
+
+It should immediately show a complete realistic LegalLens result.
+
+The sample result must include:
+
+- product name
+- brand
+- label checks
+- MRP
+- net quantity
+- calculated true price
+- nutrition
+- sugars
+- sugar-related ingredients
+- friendly explanations
+
+Use internally consistent realistic sample data.
+
+Do not create a database.
+
+Do not create a complicated demo system.
+
+The purpose is to guarantee that the prototype can still be demonstrated if the live AI/network fails.
+
+Do not make this fallback visually dominant.
+
+==================================================
+MOBILE
+==================================================
+
+The application is primarily designed for smartphones.
+
+Test approximately:
+
+390 x 844
+
+Requirements:
+
+- no horizontal scrolling
+- large tap targets
+- readable text
+- bottom sheets fit phone screens
+- camera input works
+- results are comfortable to use one-handed
+
+Desktop must also work.
+
+On desktop, center the mobile-style application rather than stretching it across the whole screen.
+
+==================================================
+DEPLOYMENT
+==================================================
+
+Prepare the application for Replit publishing.
+
+The application must run with:
+
+npm run dev
+
+and build successfully.
+
+Verify:
+
+- no TypeScript errors
+- no broken imports
+- no runtime errors
+- no broken state transitions
+- scanner works
+- sample scan works
+- result sheets work
+- reset works
+
+The application must be suitable for opening through a public Replit URL on a smartphone.
+
+==================================================
+SECURITY
+==================================================
+
+Never expose GEMINI_API_KEY to the client.
+
+Never use NEXT_PUBLIC_GEMINI_API_KEY.
+
+Only the server route can access the key.
+
+==================================================
+NO FAKE AI
+==================================================
+
+The live scanner must genuinely call Gemini.
+
+Do not hardcode fake results into the normal scan flow.
+
+Only the explicitly labeled "Try a Sample Scan" path may use static data.
+
+==================================================
+FINAL VALIDATION
+==================================================
+
+Before finishing:
+
+1. Run the project.
+2. Run the production build.
+3. Fix TypeScript errors.
+4. Fix runtime errors.
+5. Verify the scanner.
+6. Verify image preview.
+7. Verify Gemini API route.
+8. Verify Zod/schema validation.
+9. Verify deterministic price calculation.
+10. Verify Nutrition & Sugars.
+11. Verify Label Check.
+12. Verify True Price.
+13. Verify Scan Another Package.
+14. Verify Sample Scan.
+15. Verify error state.
+16. Verify mobile layout.
+17. Verify desktop layout.
+18. Verify GEMINI_API_KEY remains server-side.
+19. Verify exactly one Gemini request per real scan.
+20. Verify there are no unnecessary dependencies or services.
+
+Do not add optional features after these requirements work.
+
+PRIORITY:
+
+1. Working application
+2. Reliable smartphone demo
+3. Real Gemini integration
+4. No hallucinated/fabricated values
+5. Deterministic price calculation
+6. Nutrition/sugar analysis
+7. Label checks
+8. Beautiful UI
+9. Animations
+10. Optional polish only if everything above is already working
+
+Do not expand scope.
+
+BUILD IT NOW.

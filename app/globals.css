@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+html { background: #f2eadc; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #203126;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 221, 184, .58), transparent 30%),
+    radial-gradient(circle at 85% 25%, rgba(223, 242, 176, .5), transparent 28%),
+    #f7f0e4;
+}
+button, input { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+.safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+.sheet-scroll { max-height: min(74vh, 650px); overflow-y: auto; overscroll-behavior: contain; }
+@media (min-width: 640px) {
+  body { padding: 24px 0; }
+  .phone-shell { min-height: calc(100vh - 48px); border-radius: 36px; box-shadow: 0 25px 80px rgba(43, 48, 38, .16); overflow: hidden; }
+}
