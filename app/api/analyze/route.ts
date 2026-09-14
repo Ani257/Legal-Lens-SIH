@@ -48,8 +48,8 @@ export async function POST(request: Request) {
     if (message === "GEMINI_TIMEOUT") {
       return NextResponse.json({ error: "Reading this package took too long. Please try again when your connection is stable." }, { status: 504 });
     }
-    if (/\[(429|503)\b|high demand|resource exhausted|service unavailable/i.test(message)) {
-      return NextResponse.json({ error: "The scan service is busy right now. Please wait a moment, then tap Try Again." }, { status: 503 });
+    if (/\[(429|500|503)\b|too many requests|internal server error|high demand|resource exhausted|service unavailable/i.test(message)) {
+      return NextResponse.json({ error: "The scan service is temporarily overloaded, not a problem with your photo. Please wait a moment, then tap Try Again." }, { status: 503 });
     }
     if (/\[(400)\b|invalid argument|unsupported image/i.test(message)) {
       return NextResponse.json({ error: "This photo could not be read by the scan service. Please choose a JPG, PNG or WebP photo." }, { status: 400 });
