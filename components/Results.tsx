@@ -28,12 +28,14 @@ export default function Results({ result, onReset }: { result: AnalysisResult; o
 
   return (
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className={`rounded-[30px] p-6 ${looksGood ? "bg-gradient-to-br from-leaf to-[#174831] text-white" : "bg-gradient-to-br from-amber-100 to-peach text-ink"}`}>
+      <div className={`relative overflow-hidden rounded-[30px] p-6 ${looksGood ? "bg-gradient-to-br from-leaf to-[#174831] text-white" : "bg-gradient-to-br from-amber-100 to-peach text-ink"}`}>
+        <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full border-[18px] border-white/10" />
         <div className={`grid h-12 w-12 place-items-center rounded-2xl ${looksGood ? "bg-white/15" : "bg-white/55"}`}>
           {looksGood ? <Check size={26} /> : <CircleAlert size={26} />}
         </div>
         <p className="mt-5 text-xs font-bold uppercase tracking-[.18em] opacity-70">{result.overall}</p>
         <h2 className="mt-1 text-3xl font-black tracking-tight">{looksGood ? "Looks Good" : "Needs a Closer Look"}</h2>
+        {looksGood && <p className="mt-3 text-sm font-medium text-white/80">No issues detected in the checks we could verify. {result.checks.length} of {result.checks.length} checks passed.</p>}
         {unavailable && <p className="mt-3 text-sm font-medium opacity-80">Some details could not be verified from this photo.</p>}
       </div>
 
@@ -44,18 +46,18 @@ export default function Results({ result, onReset }: { result: AnalysisResult; o
       </div>
 
       <div className="space-y-3">
-        {cards.map(({ id, title, subtitle, icon: Icon, tone }) => (
-          <button key={id} onClick={() => setSheet(id)} className={`flex min-h-[88px] w-full items-center gap-4 rounded-[24px] ${tone} p-4 text-left transition active:scale-[.98]`}>
+        {cards.map(({ id, title, subtitle, icon: Icon, tone }, index) => (
+          <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .12 + index * .07 }} key={id} onClick={() => setSheet(id)} className={`pressable flex min-h-[88px] w-full items-center gap-4 rounded-[24px] ${tone} p-4 text-left`}>
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/75"><Icon size={23} /></span>
             <span className="min-w-0 flex-1"><span className="block font-extrabold">{title}</span><span className="mt-1 block truncate text-sm text-ink/60">{subtitle}</span></span>
             <ChevronRight size={20} className="text-ink/35" />
-          </button>
+          </motion.button>
         ))}
       </div>
 
       <div className="space-y-3 pt-2">
-        <a href={mail} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 font-extrabold text-red-800"><Flag size={19} />Report a Potential Issue</a>
-        <button onClick={onReset} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-ink px-4 font-extrabold text-white"><RotateCcw size={19} />Scan Another Package</button>
+        <a href={mail} className="pressable flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 font-extrabold text-red-800"><Flag size={19} />Report a Potential Issue</a>
+        <button onClick={onReset} className="pressable flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-ink px-4 font-extrabold text-white"><RotateCcw size={19} />Scan Another Package</button>
       </div>
 
       <BottomSheet open={sheet === "nutrition"} title="Nutrition & Sugars" onClose={() => setSheet(null)}>

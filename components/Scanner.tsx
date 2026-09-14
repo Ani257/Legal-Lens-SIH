@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Camera, ImagePlus, RotateCcw, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
@@ -75,6 +75,7 @@ async function compressImage(file: File): Promise<{ image: string; mimeType: str
 }
 
 export default function Scanner({ onResult }: { onResult: (result: AnalysisResult) => void }) {
+  const reduceMotion = useReducedMotion();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
@@ -138,31 +139,41 @@ export default function Scanner({ onResult }: { onResult: (result: AnalysisResul
 
   if (preview) return (
     <div className="space-y-5">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[30px] bg-ink shadow-soft">
+      <div className="scan-frame relative aspect-[4/5] overflow-hidden rounded-[30px] bg-ink shadow-soft">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={preview} alt="Selected package" className={`h-full w-full object-cover transition ${loading ? "opacity-45" : ""}`} />
         {loading && <>
-          <motion.div className="absolute inset-x-5 h-0.5 bg-lime shadow-[0_0_18px_4px_rgba(223,242,176,.7)]"
-            animate={{ top: ["12%", "88%", "12%"] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} />
-          <div className="absolute inset-x-6 bottom-7 rounded-2xl bg-ink/80 px-5 py-4 text-center text-sm font-bold text-white backdrop-blur">
+          <motion.div className="absolute inset-x-5 z-10 h-0.5 bg-lime shadow-[0_0_18px_4px_rgba(223,242,176,.7)]"
+            animate={{ top: reduceMotion ? "50%" : ["12%", "88%", "12%"] }} transition={{ duration: 2.4, repeat: reduceMotion ? 0 : Infinity, ease: "easeInOut" }} />
+          <div className="absolute inset-x-5 bottom-5 rounded-[22px] border border-white/15 bg-ink/80 px-5 py-4 text-left text-sm font-bold text-white backdrop-blur-md">
+            <div className="mb-3 flex items-center gap-2 text-lime"><Sparkles size={15} /><span className="text-[10px] uppercase tracking-[.18em] text-white/60">One careful read</span></div>
             {loadingMessages[messageIndex]}
+            <div className="mt-3 flex gap-1">{loadingMessages.map((_, i) => <span key={i} className={`h-1 flex-1 rounded-full ${i <= messageIndex ? "bg-lime" : "bg-white/20"}`} />)}</div>
           </div>
         </>}
       </div>
       {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
         <p className="font-bold">Something went wrong while reading this package.</p><p className="mt-1">{error}</p>
       </div>}
-      <button disabled={loading} onClick={scan} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-leaf px-5 font-extrabold text-white shadow-lg shadow-leaf/20 disabled:opacity-60">
+      <button disabled={loading} onClick={scan} className="pressable flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-leaf px-5 font-extrabold text-white shadow-lg shadow-leaf/20 disabled:opacity-60">
         {error ? <RotateCcw size={20} /> : <Sparkles size={20} />}{error ? "Try Again" : "Scan This Package"}
       </button>
-      <button disabled={loading} onClick={() => inputRef.current?.click()} className="min-h-12 w-full rounded-2xl font-bold text-leaf disabled:opacity-50">Choose Another Photo</button>
+      <button disabled={loading} onClick={() => inputRef.current?.click()} className="pressable min-h-12 w-full rounded-2xl font-bold text-leaf disabled:opacity-50">Choose Another Photo</button>
       <input ref={inputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={event => chooseFile(event.target.files?.[0])} />
     </div>
   );
 
   return (
     <div className="space-y-6">
-      <button onClick={() => inputRef.current?.click()} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-[32px] bg-gradient-to-br from-leaf to-[#173F2D] p-6 text-left text-white shadow-soft" aria-label="Choose a package photo">
+      <button onClick={() => inputRef.current?.click()} className="pressable group relative block aspect-[4/3] w-full overflow-hidden rounded-[32px] bg-gradient-to-br from-leaf to-[#173F2D] p-6 text-left text-white shadow-soft" aria-label="Choose a package photo">
+        <span className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" aria-hidden="true" />
+        <span className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" aria-hidden="true" />
+        <motion.span
+          className="absolute inset-x-7 z-10 h-px bg-gradient-to-r from-transparent via-lime/70 to-transparent"
+          animate={{ top: reduceMotion ? "50%" : ["18%", "82%", "18%"], opacity: reduceMotion ? .35 : [.25, .75, .25] }}
+          transition={{ duration: 4.5, repeat: reduceMotion ? 0 : Infinity, ease: "easeInOut" }}
+          aria-hidden="true"
+        />
         <span className="absolute left-5 top-5 h-8 w-8 border-l-2 border-t-2 border-lime" />
         <span className="absolute right-5 top-5 h-8 w-8 border-r-2 border-t-2 border-lime" />
         <span className="absolute bottom-5 left-5 h-8 w-8 border-b-2 border-l-2 border-lime" />
@@ -177,7 +188,7 @@ export default function Scanner({ onResult }: { onResult: (result: AnalysisResul
       </button>
       {error && <p className="rounded-2xl bg-red-50 p-4 text-sm font-semibold text-red-800">{error}</p>}
       <input ref={inputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={event => chooseFile(event.target.files?.[0])} />
-      <button onClick={() => onResult(sampleResult)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white/65 px-4 text-sm font-bold text-ink/70">
+       <button onClick={() => onResult(sampleResult)} className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-ink/10 bg-white/65 px-4 text-sm font-bold text-ink/70">
         <ImagePlus size={18} />Try a Sample Scan
       </button>
     </div>

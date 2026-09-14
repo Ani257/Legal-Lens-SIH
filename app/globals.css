@@ -4,6 +4,7 @@
 
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
 html { background: #f2eadc; }
 body {
   margin: 0;
@@ -16,8 +17,25 @@ body {
 }
 button, input { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
+button, a { transition: transform .2s ease, opacity .2s ease, background-color .2s ease, border-color .2s ease; }
+button:active, a:active { transform: scale(.98); }
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .035;
+  z-index: 60;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+}
 .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 .sheet-scroll { max-height: min(74vh, 650px); overflow-y: auto; overscroll-behavior: contain; }
+.pressable { transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease; }
+.pressable:active { transform: scale(.975); }
+.scan-frame { box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 18px 45px rgba(31,62,44,.18); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
 @media (min-width: 640px) {
   body { padding: 24px 0; }
   .phone-shell { min-height: calc(100vh - 48px); border-radius: 36px; box-shadow: 0 25px 80px rgba(43, 48, 38, .16); overflow: hidden; }

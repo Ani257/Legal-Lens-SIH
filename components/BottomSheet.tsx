@@ -2,11 +2,20 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 
 export default function BottomSheet({ open, title, onClose, children }: {
   open: boolean; title: string; onClose: () => void; children: ReactNode;
 }) {
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", closeOnEscape);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.body.style.overflow = previous; };
+  }, [open, onClose]);
   return (
     <AnimatePresence>
       {open && <>
@@ -22,7 +31,7 @@ export default function BottomSheet({ open, title, onClose, children }: {
           initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 310 }}
         >
-          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-ink/15" />
+          <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-ink/15" aria-hidden="true" />
           <header className="flex items-center justify-between px-6 pb-4 pt-4">
             <h2 className="text-xl font-extrabold tracking-tight">{title}</h2>
             <button onClick={onClose} className="grid h-11 w-11 place-items-center rounded-full bg-white text-ink" aria-label="Close">

@@ -1,0 +1,201 @@
+Now that the live scanning pipeline is working reliably, I want to do a major UI/UX polish pass.
+
+IMPORTANT:
+The existing backend and functionality are WORKING and must be treated as frozen.
+
+DO NOT:
+- change the Gemini model
+- change the Gemini API architecture
+- change the one-request-per-scan architecture
+- change the API schema
+- change the deterministic rule engine
+- remove the sample scan
+- remove the report-potential-issue flow
+- add authentication/database
+- add unnecessary dependencies or backend services
+- replace working functionality with mock data
+
+This task is primarily about FRONTEND DESIGN, UX and ANIMATION.
+
+REFERENCE DIRECTION:
+Use the attached/reference food-scanning UI and animation style as inspiration for interaction quality, transitions, scanning states, layered cards and polished mobile UX. Do NOT copy the reference branding, text, colors, or exact layout.
+
+LEGAL LENS SHOULD FEEL LIKE:
+A premium, modern consumer food-tech application.
+
+Keep our existing identity:
+- warm cream background
+- deep green primary color
+- soft lime/green accents
+- rounded cards
+- friendly typography
+- clean food-tech aesthetic
+
+Do NOT make it look like JARVIS, Iron Man, a government portal, or a generic SaaS dashboard.
+
+DESIGN GOALS:
+
+1. HOME / SCAN SCREEN
+
+Make the scanner the visual hero.
+
+Create a polished scanning area with:
+- animated scanning line
+- subtle corner guides
+- gentle motion/depth
+- camera/photo preview
+- clear Scan Package CTA
+- excellent mobile touch targets
+
+The interface should feel alive even before scanning, but animations must remain subtle and performant.
+
+2. SCANNING EXPERIENCE
+
+When a user selects/takes a package photo, transition smoothly into an analysis state.
+
+Show the uploaded package image prominently.
+
+Use a polished animated scanning overlay.
+
+Show friendly stages such as:
+- Reading the label
+- Checking the price
+- Checking nutrition
+- Looking for sugars
+- Preparing your results
+
+These are visual progress states for the single existing API request. Do NOT create separate API requests for each stage.
+
+The animation must never fake a successful result while the API is still pending.
+
+3. RESULTS EXPERIENCE
+
+Make the results feel like a premium mobile app rather than a static report.
+
+Keep the existing real result data and rule-engine output.
+
+Create:
+- strong overall result hero
+- product identity section
+- animated result cards
+- Nutrition & Sugars card
+- Label Check card
+- True Price card
+- Report a Potential Issue CTA
+- Scan Another Package CTA
+
+Use smooth entrance animations and staggered card transitions.
+
+Numbers should animate subtly when results appear.
+
+4. BOTTOM SHEETS
+
+Keep the existing bottom-sheet concept because it works well.
+
+Improve:
+- open/close animation
+- backdrop blur
+- spring motion
+- drag handle
+- spacing
+- typography
+- hierarchy
+- mobile scrolling
+
+Nutrition & Sugars should visually emphasize:
+Energy, Protein, Total Sugars and Sodium.
+
+Sugars to Notice should clearly identify sugar-related ingredients found in the extracted ingredient list.
+
+True Price should visually show:
+MRP ÷ Net Quantity = Calculated Unit Price
+
+Label Check should clearly show each individual check and its status.
+
+5. MICRO-INTERACTIONS
+
+Add tasteful interactions:
+- button press feedback
+- card hover/tap feedback where appropriate
+- smooth icon transitions
+- subtle loading shimmer
+- scanner animation
+- result card entrance
+- bottom-sheet spring animation
+
+Do not over-animate the interface.
+
+6. MOBILE FIRST
+
+The primary demo device is a phone.
+
+The application must look excellent at approximately 390px wide.
+
+Use:
+- large touch targets
+- safe spacing
+- no horizontal overflow
+- readable typography
+- smooth scrolling
+- camera capture input on supported mobile browsers
+
+Desktop should still look polished.
+
+7. ACCESSIBILITY / PERFORMANCE
+
+Respect prefers-reduced-motion where practical.
+
+Avoid expensive continuous animations.
+
+Do not introduce large libraries just for visual effects.
+
+Prefer CSS animations and the existing Framer Motion setup.
+
+8. IMPORTANT COMPLIANCE LANGUAGE
+
+Do not imply that LegalLens legally proves complete compliance.
+
+Prefer:
+"Looks Good"
+"No issues detected in the checks we could verify."
+"4 of 4 checks passed."
+
+For uncertain information use:
+"Could not verify"
+
+Do not fabricate missing information.
+
+9. ERROR STATES
+
+Keep the recently fixed Gemini reliability behavior.
+
+Make errors visually polished and friendly.
+
+Do not add automatic retries.
+
+Do not make another Gemini request automatically.
+
+10. SAMPLE SCAN
+
+Keep "Try a Sample Scan".
+
+Make the sample result use the exact same polished result experience as a real scan.
+
+FINAL REQUIREMENT:
+
+This should feel like a polished hackathon product that a normal consumer would genuinely want to use.
+
+Prioritize visual quality, animation quality, mobile UX and first impression.
+
+Before finishing:
+- run the production build
+- verify TypeScript
+- verify the real scan flow still works
+- verify Sample Scan still works
+- verify Report a Potential Issue still works
+- verify there is still exactly one Gemini request per real scan
+- verify there are no horizontal overflow/layout issues on mobile
+
+Make the UI substantially better, but preserve the working LegalLens functionality and architecture.
+
+BUILD THE UI NOW.
