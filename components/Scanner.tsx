@@ -14,18 +14,64 @@ const loadingMessages = [
   "Preparing your results..."
 ];
 
+const MAX_COMPRESSED_BYTES = 1_250_000;
+const REQUEST_TIMEOUT_MS = 35_000;
+
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error("This photo could not be prepared. Please choose another one.")),
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+function blobToBase64(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const base64 = result.split(",")[1];
+      base64 ? resolve(base64) : reject(new Error("This photo could not be prepared. Please choose another one."));
+    };
+    reader.onerror = () => reject(new Error("This photo could not be read. Please choose another one."));
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function compressImage(file: File): Promise<{ image: string; mimeType: string }> {
   if (!file.type.startsWith("image/")) throw new Error("Please choose a valid image.");
   if (file.size > 15 * 1024 * 1024) throw new Error("This image is too large. Please choose one under 15 MB.");
-  const bitmap = await createImageBitmap(file);
-  const maxSide = 1600;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error("This photo format is not supported. Please use a JPG, PNG or WebP photo.");
+  }
+  const maxSide = 1400;
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const context = canvas.getContext("2d");
+  if (!context) {
+    bitmap.close();
+    throw new Error("This photo could not be prepared. Please choose another one.");
+  }
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  return { image: canvas.toDataURL("image/jpeg", 0.84).split(",")[1], mimeType: "image/jpeg" };
+
+  let quality = 0.82;
+  let blob = await canvasToBlob(canvas, quality);
+  while (blob.size > MAX_COMPRESSED_BYTES && quality > 0.55) {
+    quality -= 0.08;
+    blob = await canvasToBlob(canvas, quality);
+  }
+  if (blob.size > MAX_COMPRESSED_BYTES) {
+    throw new Error("This photo is still too large after resizing. Please take a closer photo of the label.");
+  }
+  return { image: await blobToBase64(blob), mimeType: "image/jpeg" };
 }
 
 export default function Scanner({ onResult }: { onResult: (result: AnalysisResult) => void }) {
@@ -55,19 +101,39 @@ export default function Scanner({ onResult }: { onResult: (result: AnalysisResul
   async function scan() {
     if (!file || loading) return;
     setLoading(true); setError(""); setMessageIndex(0);
+    let timeout: number | undefined;
     try {
       const payload = await compressImage(file);
+      const controller = new AbortController();
+      timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        cache: "no-store",
+        signal: controller.signal
       });
-      const data = await response.json();
+      const responseText = await response.text();
+      let data: { error?: string } & Partial<AnalysisResult>;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error("The scan service returned an unexpected response. Please try again.");
+      }
       if (!response.ok) throw new Error(data.error || "Something went wrong while reading this package.");
-      onResult(data);
+      onResult(data as AnalysisResult);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Something went wrong while reading this package.");
-    } finally { setLoading(false); }
+      if (reason instanceof DOMException && reason.name === "AbortError") {
+        setError("Reading the package took too long. Please try again when your connection is stable.");
+      } else if (reason instanceof TypeError) {
+        setError("We could not reach the scan service. Check your connection and try again.");
+      } else {
+        setError(reason instanceof Error ? reason.message : "Something went wrong while reading this package.");
+      }
+    } finally {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      setLoading(false);
+    }
   }
 
   if (preview) return (

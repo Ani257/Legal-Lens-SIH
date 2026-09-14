@@ -1,0 +1,47 @@
+We need to fix the live package scanning reliability BEFORE making any UI changes.
+
+Current behavior:
+- "Try a Sample Scan" works correctly.
+- "Report Potential Issue" works correctly.
+- The live Gemini scan sometimes works, but often shows:
+  "Something went wrong while reading this package."
+  "Failed to fetch"
+- A Kurkure package image successfully worked once, but the same type of real scan later failed again.
+- The Agent's own previous validation said the Gemini route succeeded with exactly one request.
+
+Do NOT redesign the UI.
+Do NOT add new features.
+Do NOT make multiple Gemini requests.
+Do NOT add retries that automatically call Gemini again.
+Do NOT change the Gemini model.
+
+Diagnose the actual cause of the "Failed to fetch" error by inspecting:
+1. the client-side scan/upload flow,
+2. /api/analyze,
+3. server/runtime logs,
+4. image conversion/resizing/base64 handling,
+5. request size limits,
+6. API route error handling,
+7. environment variable access,
+8. whether the Replit preview/development environment is causing the request to fail.
+
+The scan flow must make exactly ONE request to /api/analyze per user scan.
+
+Make the live scan robust for normal phone photos:
+- Resize/compress the image client-side before sending it.
+- Keep the payload reasonably small.
+- Preserve enough resolution for package text.
+- Return proper JSON error responses from /api/analyze instead of allowing the request to terminate unexpectedly.
+- Never expose the Gemini API key to the browser.
+- If Gemini returns an error, show a useful friendly error message rather than the generic browser-level "Failed to fetch" whenever possible.
+
+Do not fabricate package results when the request fails.
+
+After fixing it:
+- run the production build,
+- test the API route,
+- test with a real uploaded package image,
+- verify the frontend receives and renders the response,
+- confirm that one scan produces only one Gemini request.
+
+Only modify code that is necessary for this reliability fix.

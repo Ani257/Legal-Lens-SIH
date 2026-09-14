@@ -9,13 +9,18 @@ export async function extractPackage(base64: string, mimeType: string) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("MISSING_API_KEY");
   const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-3.5-flash" });
+  let timeoutId: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 45_000)
+    { timeoutId = setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 25_000); }
   );
-  const request = model.generateContent([
-    prompt,
-    { inlineData: { data: base64, mimeType } }
-  ]);
-  const result = await Promise.race([request, timeout]);
-  return result.response.text();
+  try {
+    const request = model.generateContent([
+      prompt,
+      { inlineData: { data: base64, mimeType } }
+    ]);
+    const result = await Promise.race([request, timeout]);
+    return result.response.text();
+  } finally {
+    clearTimeout(timeoutId!);
+  }
 }

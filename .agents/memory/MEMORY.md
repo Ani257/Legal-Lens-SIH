@@ -1,0 +1,1 @@
+- [Gemini scan timeout boundary](gemini-scan-timeout.md) — return structured errors before the Replit phone/proxy connection can surface a browser-level fetch failure.
