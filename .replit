@@ -37,4 +37,5 @@ externalPort = 80
 
 [deployment]
 run = ["npm", "run", "start"]
-deploymentTarget = "cloudrun"
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
