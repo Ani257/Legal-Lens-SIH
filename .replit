@@ -1,3 +1,5 @@
+run = "npm run start"
+
 modules = ["nodejs-20", "python-base-3.13"]
 [nix]
 channel = "stable-25_05"
